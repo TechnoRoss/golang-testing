@@ -81,5 +81,5 @@ jobs:
           git checkout $BRANCH_NAME
 
           git add .
-          git commit -m "chore: Updated copyright years to $YEAR in Go files"
+          git commit -m "pingbot: Updated copyright year to $YEAR or added copyright to all Go files" || exit 0
           git push origin $BRANCH_NAME
