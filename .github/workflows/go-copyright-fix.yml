@@ -48,22 +48,23 @@ jobs:
           fi
 
       - name: Commit and push changes
+        if: success()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Get the current branch name
-          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-          if [ "$BRANCH_NAME" = "HEAD" ]; then
-            BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          fi
+          # Extract the source branch (where the PR came from)
+          BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
 
-          # Ensure we are on the correct branch
+          echo "🔍 Determined source branch: $BRANCH_NAME"
+
+          # Switch to the source branch
+          git fetch origin $BRANCH_NAME
           git checkout $BRANCH_NAME
 
-          # Add and commit changes
+          # Stage and commit changes
           git add .
           git commit -m "chore: Automatically add missing copyright headers to Go files" || exit 0
 
-          # Push changes
+          # Push back to the source branch
           git push origin $BRANCH_NAME
