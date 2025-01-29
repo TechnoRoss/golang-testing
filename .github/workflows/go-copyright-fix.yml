@@ -10,7 +10,8 @@ jobs:
   check-and-fix-copyright:
     name: Check and Fix Go File Copyrights
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
