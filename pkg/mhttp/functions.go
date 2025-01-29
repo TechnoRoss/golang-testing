@@ -1,4 +1,4 @@
-// Copyright © 2025 TechnoDadR
+// Copyright © 2025 Ping Identity Corporation
 
 package mhttp
 

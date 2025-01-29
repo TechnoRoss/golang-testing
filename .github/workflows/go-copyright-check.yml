@@ -17,7 +17,7 @@ jobs:
       - name: Check Go file copyrights
         run: |
           ERROR=0
-          COPYRIGHT_LINE="// Copyright © 2025 TechnoDadR"
+          COPYRIGHT_LINE="// Copyright © 2025 Ping Identity Corporation"
           
           # Find all Go files
           for file in $(find . -type f -name "*.go"); do

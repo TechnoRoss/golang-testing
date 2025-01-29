@@ -10,28 +10,35 @@ jobs:
   check-and-fix-copyright:
     name: Check and Fix Go File Copyrights
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set Year Variable
+        run: echo "YEAR=$(date +%Y)" >> $GITHUB_ENV
+
       - name: Check and Fix Go file copyrights
         run: |
           ERROR=0
-          COPYRIGHT_HEADER="// Copyright © 2025 TechnoDadR\n"
-          
+          CURRENT_YEAR=$YEAR
+
           # Find all Go files
           for file in $(find . -type f -name "*.go"); do
-            # Read the first few lines of the file
-            if ! head -n 5 "$file" | grep -q "Copyright © 2025 TechnoDadR"; then
-              echo "⚠️ Fixing missing copyright in: $file"
+            # If file contains a copyright with an older year, update it in-place
+            if grep -E -q "// Copyright © [0-9]{4} Ping Identity Corporation" "$file"; then
+              echo "🔄 Updating copyright year in: $file"
+              sed -i -E "s|(// Copyright © )([0-9]{4})( Ping Identity Corporation)|\1$CURRENT_YEAR\3|" "$file"
+              ERROR=1
+            # If file does NOT contain a copyright at all, insert it before the package declaration
+            elif ! grep -q "// Copyright ©" "$file"; then
+              echo "⚠️ Adding missing copyright to: $file"
               TEMP_FILE=$(mktemp)
 
-              # Ensure the header is added before the package declaration
-              awk -v header="$COPYRIGHT_HEADER" '
+              # Insert copyright before package declaration
+              awk -v header="// Copyright © $CURRENT_YEAR Ping Identity Corporation\n" '
                 NR==1 { print header }
                 { print }
               ' "$file" > "$TEMP_FILE"
@@ -42,7 +49,7 @@ jobs:
           done
 
           if [[ $ERROR -eq 0 ]]; then
-            echo "✅ All Go files already contain the copyright notice."
+            echo "✅ All Go files have the correct copyright year."
           else
             echo "🔧 Changes made. Committing..."
           fi
@@ -53,18 +60,14 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Extract the source branch (where the PR came from)
+          # Extract the source branch (PR branch or main branch)
           BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
 
           echo "🔍 Determined source branch: $BRANCH_NAME"
 
-          # Switch to the source branch
           git fetch origin $BRANCH_NAME
           git checkout $BRANCH_NAME
 
-          # Stage and commit changes
           git add .
-          git commit -m "chore: Automatically add missing copyright headers to Go files" || exit 0
-
-          # Push back to the source branch
+          git commit -m "pingbot: Updated copyright year to $YEAR or added copyright across all Go files" || exit 0
           git push origin $BRANCH_NAME
