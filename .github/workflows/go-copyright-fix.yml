@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,14 +26,17 @@ jobs:
         run: |
           ERROR=0
           CURRENT_YEAR=$YEAR
+          MODIFIED_FILES=0
 
           # Find all Go files
           for file in $(find . -type f -name "*.go"); do
             # If file contains a copyright with an older year, update it in-place
             if grep -E -q "// Copyright © [0-9]{4} Ping Identity Corporation" "$file"; then
-              echo "🔄 Updating copyright year in: $file"
-              sed -i -E "s|(// Copyright © )([0-9]{4})( Ping Identity Corporation)|\1$CURRENT_YEAR\3|" "$file"
-              ERROR=1
+              if ! grep -q "// Copyright © $CURRENT_YEAR Ping Identity Corporation" "$file"; then
+                echo "🔄 Updating copyright year in: $file"
+                sed -i -E "s|(// Copyright © )([0-9]{4})( Ping Identity Corporation)|\1$CURRENT_YEAR\3|" "$file"
+                MODIFIED_FILES=1
+              fi
             # If file does NOT contain a copyright at all, insert it before the package declaration
             elif ! grep -q "// Copyright ©" "$file"; then
               echo "⚠️ Adding missing copyright to: $file"
@@ -45,19 +49,26 @@ jobs:
               ' "$file" > "$TEMP_FILE"
 
               mv "$TEMP_FILE" "$file"
-              ERROR=1
+              MODIFIED_FILES=1
             fi
           done
 
-          if [[ $ERROR -eq 0 ]]; then
-            echo "✅ All Go files have the correct copyright year."
+          if [[ $MODIFIED_FILES -eq 0 ]]; then
+            echo "✅ No copyright changes were needed."
+            exit 0
           else
-            echo "🔧 Changes made. Committing..."
+            echo "🔧 Changes made. Preparing to commit..."
           fi
 
       - name: Commit and push changes
         if: success()
         run: |
+          # Check if there are actual changes before committing
+          if git diff --quiet; then
+            echo "✅ No changes to commit."
+            exit 0
+          fi
+
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -70,5 +81,5 @@ jobs:
           git checkout $BRANCH_NAME
 
           git add .
-          git commit -m "pingbot: Updated copyright year to $YEAR or added copyright across all Go files" || exit 0
+          git commit -m "chore: Updated copyright years to $YEAR in Go files"
           git push origin $BRANCH_NAME
