@@ -1,0 +1,58 @@
+name: Go Copyright Auto-Fixer
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  check-and-fix-copyright:
+    name: Check and Fix Go File Copyrights
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check and Fix Go file copyrights
+        run: |
+          ERROR=0
+          COPYRIGHT_HEADER="// Copyright © 2025 TechnoDadR\n"
+          
+          # Find all Go files
+          for file in $(find . -type f -name "*.go"); do
+            # Read the first few lines of the file
+            if ! head -n 5 "$file" | grep -q "Copyright © 2025 TechnoDadR"; then
+              echo "⚠️ Fixing missing copyright in: $file"
+              TEMP_FILE=$(mktemp)
+
+              # Ensure the header is added before the package declaration
+              awk -v header="$COPYRIGHT_HEADER" '
+                NR==1 { print header }
+                { print }
+              ' "$file" > "$TEMP_FILE"
+
+              mv "$TEMP_FILE" "$file"
+              ERROR=1
+            fi
+          done
+
+          if [[ $ERROR -eq 0 ]]; then
+            echo "✅ All Go files already contain the copyright notice."
+          else
+            echo "🔧 Changes made. Committing..."
+          fi
+
+      - name: Commit and push changes
+        if: success()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add .
+          git commit -m "chore: Automatically add missing copyright headers to Go files" || exit 0
+          git push
