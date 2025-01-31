@@ -100,7 +100,6 @@ jobs:
           GH_TOKEN: ${{ secrets.PINGBOT_PAT }}
           GITHUB_TOKEN: ""
         run: |
-          gh auth login --with-token <<< "${{ secrets.PINGBOT_PAT }}" 
           gh pr create \
             --base $BASE_BRANCH \
             --head $BRANCH_NAME \
