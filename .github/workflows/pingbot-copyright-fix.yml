@@ -18,11 +18,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # Ensures all branches and history are available
 
       - name: Set Date and Year Variables
         run: |
           echo "YEAR=$(date +%Y)" >> $GITHUB_ENV
           echo "RUN_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+
+      - name: Determine Base Branch
+        run: |
+          DEFAULT_BRANCH=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+          echo "BASE_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
+          echo "Determined base branch: $DEFAULT_BRANCH"
 
       - name: Check and Fix Go file copyrights
         run: |
@@ -69,15 +76,12 @@ jobs:
 
           BRANCH_NAME="auto/update-copyright-${RUN_DATE}"
 
-          # Ensure branch does not already exist
-          git fetch origin
-          if git rev-parse --verify origin/$BRANCH_NAME >/dev/null 2>&1; then
-            echo "Branch $BRANCH_NAME already exists. Reusing it."
-            git checkout $BRANCH_NAME
-          else
-            echo "Creating new branch: $BRANCH_NAME"
-            git checkout -b $BRANCH_NAME
-          fi
+          # Ensure we start from the default base branch
+          git checkout $BASE_BRANCH
+          git pull origin $BASE_BRANCH
+
+          # Create a new branch
+          git checkout -b $BRANCH_NAME
 
           git add .
           git commit -m "pingbot: Update or add copyright header"
