@@ -80,8 +80,13 @@ jobs:
           git checkout $BASE_BRANCH
           git pull origin $BASE_BRANCH
 
-          # Create a new branch
-          git checkout -b $BRANCH_NAME
+          if git rev-parse --verify origin/$BRANCH_NAME >/dev/null 2>&1; then
+            echo "Branch $BRANCH_NAME already exists. Reusing it."
+            git checkout $BRANCH_NAME
+          else
+            echo "Creating new branch: $BRANCH_NAME"
+            git checkout -b $BRANCH_NAME
+          fi
 
           git add .
           git commit -m "pingbot: Update or add copyright header"
