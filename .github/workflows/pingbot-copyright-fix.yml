@@ -2,7 +2,7 @@ name: Automatic Go Copyright Fix
 
 on:
   schedule:
-    - cron: '0 2 * * *' # Runs at 2:00 AM UTC daily
+    - cron: '0 2 * * 0' # Runs at 2:00 AM UTC Sundays
   workflow_dispatch: # Allows manual execution
 
 jobs:
