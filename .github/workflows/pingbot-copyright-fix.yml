@@ -108,5 +108,4 @@ jobs:
             - Updated outdated copyright years in \`.go\` files.
             - Added missing copyright headers where necessary.
 
-            Please review and merge if everything looks good!" \
-            --label "automated, dependencies"
+            Please review and merge if everything looks good!"
