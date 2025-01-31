@@ -91,7 +91,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          base: "main"
+          # base: "main"
           branch: auto/update-copyright-${{ env.RUN_DATE }}
           title: "pingbot: Update or insert copyright"
           body: |
