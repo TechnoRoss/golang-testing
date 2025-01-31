@@ -88,10 +88,11 @@ jobs:
           git push origin $BRANCH_NAME
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: ${{ env.DEFAULT_BRANCH }}
+          delete-branch: true
           branch: auto/update-copyright-${{ env.RUN_DATE }}
           title: "pingbot: Update or insert copyright"
           body: |
